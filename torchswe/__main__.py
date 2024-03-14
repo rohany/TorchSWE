@@ -455,18 +455,20 @@ def main():
     else:
         logger.info("No need to save data for \"no save\" method or for a continued run.")
 
+    # We're not going to do this as each call to `runtime.marching` does
+    # some extra work that messes up the loop/tracing state.
     # Don't time the warmup iteration
-    if config.params.warmup > 0:
-        max_iters = config.temporal.max_iters
-        assert max_iters >= config.params.warmup
-        config.temporal.max_iters = config.params.warmup
-        t0 = time()
-        soln = runtime.marching(soln, runtime, config)
-        t1 = time()
-        logger.info("Warmup time (wall time): %s seconds", (t1 - t0)/1e6)
-        config.temporal.max_iters = max_iters - config.params.warmup
+    # if config.params.warmup > 0:
+    #     max_iters = config.temporal.max_iters
+    #     assert max_iters >= config.params.warmup
+    #     config.temporal.max_iters = config.params.warmup
+    #     t0 = time()
+    #     soln = runtime.marching(soln, runtime, config)
+    #     t1 = time()
+    #     logger.info("Warmup time (wall time): %s seconds", (t1 - t0)/1e6)
+    #     config.temporal.max_iters = max_iters - config.params.warmup
 
-    perf_t0 = time()
+    # perf_t0 = time()
     # start running time marching until each output time
     for runtime.next_t in runtime.times[runtime.tidx+1:]:
         logger.info("Marching from T=%s to T=%s", runtime.cur_t, runtime.next_t)
@@ -480,12 +482,12 @@ def main():
         runtime.tidx += 1
 
         # append to the NetCDF file
-        if runtime.times.save:
-            soln = write_snapshot(soln, runtime, config)
-            logger.info("Done writing the states at T=%s to the solution file.", runtime.next_t)
+        # if runtime.times.save:
+        #     soln = write_snapshot(soln, runtime, config)
+        #     logger.info("Done writing the states at T=%s to the solution file.", runtime.next_t)
 
-    logger.info("Done time marching.")
-    logger.info("Run time (wall time): %s seconds", (time()-perf_t0)/1e6)
+    # logger.info("Done time marching.")
+    # logger.info("Run time (wall time): %s seconds", (time()-perf_t0)/1e6)
     logger.info("Program ends now.")
 
     # dump mesh and solution variables to a pickle file if requested

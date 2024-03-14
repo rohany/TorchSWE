@@ -24,6 +24,8 @@ from torchswe.fvm import prepare_rhs as _prepare_rhs
 from torchswe.utils.misc import exchange_states as _exchange_states
 from torchswe.kernels import reconstruct_cell_centers as _reconstruct_cell_centers
 
+from torchswe.utils.timing import time
+
 _logger = _logging.getLogger("torchswe.temporal")
 
 
@@ -176,8 +178,12 @@ def ssprk2(states: States, runtime: DummyDict, config: Config):
     states = runtime.gh_updater(states)
     states = _reconstruct_cell_centers(states, runtime, config)
 
+    perf_t0 = None
+
     # loop till cur_t reaches the target t or hitting max iterations
     for _iter in range(config.temporal.max_iters):
+        if _iter == config.params.warmup:
+            perf_t0 = time()
 
         _logger.info("Iteration: %s\n", str(_iter))
 
@@ -242,6 +248,9 @@ def ssprk2(states: States, runtime: DummyDict, config: Config):
         # for the next time step; copying values should be faster than allocating new arrays
         if config.temporal.max_iters > 1:
             prev_q[...] = states.q[internal]
+
+    _logger.info("Done time marching.")
+    _logger.info("Run time (wall time): %s seconds", (time()-perf_t0)/1e6)
 
     return states
 
